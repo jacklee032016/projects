@@ -1,0 +1,26 @@
+					Public Key and Cipher in WolfSsl/cyaSsl release 3.6.0   
+													Li Zhijie 2015/08/25
+
+2015.08.25
+	Diffie-Hellman Key Exchange
+		Init DH Key from certificate file or bit stream for prime number and its base;
+		Create public key and private key with a random based on the key initialized;
+		Create shared secret, which can be used in symestic cryptograph, with the local private key and public key recevied from peer.
+
+		Theory: 
+				Peers have prime number and its base, which can be known by devastation;
+				One peer send a random to its peer;
+				All use this random calculated its public/private keys;(Same key pairs in both ends?)
+				Calculate new shared secret with local private key and remote public key;
+
+		Questions:
+				What content is stored in the der certificate file of dh2048.der
+				(der is binary certificate file)				
+
+
+	DSA, Digital Signature Algorithm
+		Init the DSA key pair from der certificate file;
+		Signing hash with the public key of DSA and a random;
+		Verifying the signature with the private key of DSA;
+		
+		

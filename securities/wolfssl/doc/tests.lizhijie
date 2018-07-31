@@ -1,0 +1,38 @@
+					FAQ  for this package
+											Li Zhijie, 2015.08.11
+
+
+2015.09.24
+	/* vsprintf : param of va_list; sprintf : param of varied params such as 'format ...' */
+
+
+Client:
+		client -h www.wolfssl.com -p 443 -d -g 
+		-d : disable peer check
+		-g : send HTTP get
+		
+		services3.cic.gc.ca : HTTPS
+		
+2015.09.22	===============
+Basic Flow:
+		1. creating METHOD,
+		2. creating and configing CTX (CTX and certificate manager, cipher list, DH key size, PSK etc.)
+		3. creating and configing SSL (session, main configuations are in CTX),
+			CA certificate assigned to Certificate Manager: only PSK is not used (ca-cert.pem)
+			CERT_TYPE assigned to certificate cache of CTX/SSL, and check the validatity of certificate (client-cert.pem)
+			Private Key assigned to private key cache of CTX/SSL (client-key.pem)
+					RSA private key
+					ECC private key			
+		4. create socket
+		5. setting fd(socket) into SSL
+		6. SSL_Connection: all hello and hand-shake messages
+				All sending states are handled in wolfSsl_connection() with state of options.connectState
+				All receiving states are handled in ProcessReply with state of options.processReply
+		
+
+Protocol Model
+			Hello Message (version+random)
+			Hand-shake Layer
+			Recoder Layer
+
+			

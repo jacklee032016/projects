@@ -1,0 +1,219 @@
+					WolfSsl/cyaSsl release 3.6.0   
+													Li Zhijie 2015/08/10
+
+2015.09.25
+	Name Rules of directories, files, functions and parameters
+			For parameters of function, dest is the first, then the source and its size.
+			Name of functions: 
+							Functions of module must be begin with the module name
+							Functions internal in module can be named without prefix
+			Name of files:
+					Begin with the prefix of module name
+					
+
+2015.09.24
+	3 modules:
+		1. crypto
+		2. certificate(cert)
+				asn: ASN.1 must be supported to build this module.
+				encode: encode key and certificate into DER buffer
+				decode: decode DER into key and certificate
+				code: some algorithm both encode and decode, such as CRL, signature, PKCS#7
+				
+		3. protocol(ssl)
+				common configuration for context and session, such as load of certificate, setup of CipherSuite
+				Operations about package management of SSL/TLS/DTLS
+				Flow of protocols
+
+
+2015.09.22
+	Split src/include into crypto module and SSL module
+			ASN.1 is in SSL: GetCA and GetCAByName in SSL module is needed in wcaAsnParseCert
+			SSL is splited into common, client, server modules
+
+
+2015.09.13
+	About Fast Math: tfm.c. It is disabled defaultly.
+				asm.c is included in tfm.
+				XXX.i files are included in asm.c.
+
+1.	
+	wccXXX.h/c: Wolf Crypto Common files
+				Rules: All header files only include wccTypes.h and define new types and their operations.
+							 All C files only include cmnWcc.h and all types and operations in this Crypto Common.
+				Dependence:
+							PwdBased : on hmac, sha and other hash algorithm
+							Random : ac4
+
+2.
+	wchXXX.h/c : Wolf Crypto Hash files
+				Rules: All header files only include cmnWcc.h (only common logic) and define new types and operations						
+							 All C files only include cmnCrypto.h and all types and operations in this Crypto Common.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on crypto common module
+				Notes:
+							wchBlake2b is not used.			
+
+3.
+	wcmXXX.h/c : Wolf Crypto MAC files
+				Rules: All header files only include cmnWcc.h (only common logic) and define new types and operations						
+							 All C files only include cmnCrypto.h and all types and operations in this Crypto Common.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on crypto Hash module
+				Notes:
+							wcmPoly1305 is not used.			
+
+4.
+	wcbXXX.h/c : Wolf Crypto Block files
+				Rules: All header files only include wccType.h, eg. they are only dependent on the common data type	
+							 All C files only include cmnCrypto.h, just for some utilities functions such as debug out.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on common data types
+				Notes:
+							wcbAes only use C file, some other asm for it is not used?
+
+5.
+	wcsXXX.h/c : Wolf Crypto Stream files
+				Rules: All header files only include wccType.h, eg. they are only dependent on the common data type	
+							 All C files only include cmnCrypto.h, just for some utilities functions such as debug out.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on common data types
+				Notes:
+							.			
+
+6.
+	wckXXX.h/c : Wolf Crypto Public Key Cipher files
+				Rules: All header files only include cmnWcc.h (only common logic) and define new types and operations						
+							 All C files only include cmnCrypto.h and all types and operations in this Crypto Common.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on crypto Hash module
+				Notes:
+							wckDh : common data type and interger/random operation
+							wckDsa : common data type and interger/random operation
+							wckRsa : common data type and interger/random operation
+							wckPkcs7 : common data type and interger/random operation, DES3, ASN.1
+
+7.
+	wsXXX.h/c : Wolf ASN.1 files
+				Rules: All header files only include cmnWcc.h (only common logic) and define new types and operations						
+							 All C files only include cmnCrypto.h and all types and operations in this Crypto Common.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							1. crypto common modules : wccTypes.h wccInteger.h
+							2. Hash modules : MD5, SHA
+							3. Key modules : All Key modules (DH, DSA, RSA, ECC)
+				Notes:
+							wcmPoly1305 is not used.			
+
+
+7.
+	wsXXX.h/c : Wolf SSL files
+	wscXXX.h/c : Wolf SSL common files
+				Rules: All header files only include cmnWcc.h (only common logic) and define new types and operations						
+							 All C files only include cmnCrypto.h and all types and operations in this Crypto Common.
+							 All headers, defined in this module, are included in the cmnCrypyo.h and can be refered in other modules
+				Dependence:
+							Only dependent on crypto Hash module
+				Notes:
+							wcmPoly1305 is not used.			
+
+	wssXXX.h/c : Wolf SSL Protocol SSL files
+
+
+
+2015.09.11 Friday
+	Split internel.c and ssl.c into different modules and built/run it.
+	
+
+
+2015.08.28
+	Remove cyassl support.
+	Test client/server, echoclient/echoserver programs.
+
+
+2015.08.24
+	When keyed Hash  HAVE_POLY1305 is enabled, the internel.c of SSL is failed in build.
+	
+	WinSock is needed when Public Key is tested.
+
+
+2015.08.22
+	Build options:
+		Disable default options which is enabled defaultly: NO_XXX, for example NO_MD5
+		Enable default options which is disabled defaultly: WOLFSSL_XXX, for example WOLFSSL_MD2; or HAVE_XXX, for example HAVE_BLAKE2
+
+	Blake2 build failed because of inline in blake2-int.h		
+
+2015.08.07
+
+OPENSSL_EXTRA;WOLFSSL_RIPEMD;WOLFSSL_SHA512;NO_PSK
+
+
+
+1. Theory
+		Encrption theories and algorithms.
+		
+		Block/Stream ciphers are all sysmetric encryption algorithm.
+				tfm.h/c : TomsFastMath
+		
+		Algorithm
+		 1). Hash: 
+		 		MD2, MD4, MD5, SHA-128/256/512, RipeMD-160, Blake2b
+		 			SHA(SHA-128) : sha.c, enabled
+		 			SHA-256:sha256.c, enabled
+		 			SHA-384/SHA-512: sha512.c, disabled
+		 			
+		 		
+		 2). Keyed Hash: Hash algorithm can be inited by different keys.
+				HMAC, GMAC, Poly135,  PBKDF2(yaSsl/C++)
+				HMAC: hash with key and 3 hash algorithms: MD5, SHA-XXX, BLAKE2.
+				GMAC: defined in aes.c/aes.h. Add IV into HASH, just like AES, but the key
+MAC：Message Authentication Code，用于保证消息的完整性和认证性，即使用加密键来计算摘要。
+HMAC是使用加密的hash函数计算MAC的算法，一般支持键的hash算法，例如MD5和SHA都可以用来计算MAC。
+				
+
+		 3). Block Cipher
+				 AES, DES, 3DES, Camellia
+				 
+		 4). Stream Cipher
+		 		 ARC4, Rabbit, HC-128, ChaCha
+		 		
+		 3). Public Key: encryption ans signed
+		 		RSA, DH, EDH, DSA(Digital Signature Algorithm), 
+
+
+		CryptAnalysis
+				Attack the implementation, not algorithm.
+				Side Channel information.
+				
+2. Architecture
+		Software architechture of this package.
+		
+3. Applications
+		How to use this package.
+		
+		
+Directories:
+		wolfCrypt: crypt library
+					*.i : asm files for algebra, which are included in the asm.c
+					
+		src:
+				wolfSsl implementation.
+		
+		wolfSsl:
+				Header files for wolfSSL implementation.
+				wolfCrypt: header files for crypt library
+				openssl: export header files compatible with OpenSSL standard.
+				
+
+Build:
+		BUILDING_WOLFSSL + WOLFSSL_DLL : 
+		Build into DLL with these 2 macros; with only the last one, this DLL is used.
+		
+		asn.c, which is in wolfCrypt, dependent on wolfSsl in GetCA() and GetCAByName.
+		

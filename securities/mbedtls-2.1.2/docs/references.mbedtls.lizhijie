@@ -1,0 +1,21 @@
+					README for mbed TLS 2.1.2
+										Nov.6, 2016 	Zhijie Li
+
+
+http://cacr.uwaterloo.ca/hac/
+	Application Encryptography
+
+The HAVEGE RNG was designed by Andre Seznec in 2002.
+ *  http://www.irisa.fr/caps/projects/hipsor/publi.php	
+
+
+ Definition of CCM:
+ * http://csrc.nist.gov/publications/nistpubs/800-38C/SP800-38C_updated-July20_2007.pdf
+ * RFC 3610 "Counter with CBC-MAC (CCM)"
+ * Related:
+ * RFC 5116 "An Interface and Algorithms for Authenticated Encryption"
+ 
+ 
+ http://www.via.com.tw/en/downloads/whitepapers/initiatives/padlock/programming_guide.pdf
+ 
+ 

@@ -1,0 +1,42 @@
+				README	for axTls 1.5.3
+										Nov.12, 2015
+
+Nov.17, 2015, Wednesday
+Openssl run as server:	
+	When openssl run as server, it must load a certificate which contains the private key and public key.
+	Normally, the certificates in sslTest directory is public key certificate, eg. only public key signed by one CA.
+
+	So, it can be resolved by creating a self-signed cert containing private key with command:
+				"openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout mycert.pem -out mycert.pem"
+	or, load the server with independent args for private key		
+				"openssl s_server -accept $PORT -cert $CA_CERT -$SRV -key $PRIVATE_KEY"
+
+	When browser access this SSL server, it would complaint security problem, but only in Jisu browser, 
+	the infor about certificate can be viewed.
+
+
+About usage of openssl
+	openssl version a:  all building info
+	openssl help: all comand list
+	openssl command -ERR_OPTION: list all options for this command
+
+Nov.17, 2015
+	HMAC:
+		Different MAC algorithm return different length of HMAC result. For example, for MD5, it is 16 bytes;
+		for SHA1, it is 20 bytes.
+		
+
+Steps of creating cert:
+1. RSA private key
+		It can be encrypted with AES and password
+		Default it is PEM format
+		PEM can be changed into DER format
+2. Cert request with RSA private key
+		The public key is also created in this step;
+		DN, subjuct and Organization, Unit, CN must be provided;
+3. X509 Certificate
+		With cert request, private key
+		CA cert, signed with the private key of itself;
+		Other cert, With CA cert and signed by CA private key;
+		Default it is in PEM and can be changed into DER.
+		

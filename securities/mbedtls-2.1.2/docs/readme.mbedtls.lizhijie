@@ -1,0 +1,52 @@
+					README for mbed TLS 2.1.2
+										Nov.6, 2016 	Zhijie Li
+
+
+platform specific options are available in the fully-documented configuration file `include/mbedtls/config.h`, which is also the place where features can be selected.										
+Perl script `scripts/config.pl`
+
+### Yotta
+[yotta](http://yottabuild.org) is a package manager and build system developed by mbed; it is the build system of mbed OS. 
+To install it on your platform, please follow the yotta [installation instructions](http://docs.yottabuild.org/#installing).
+
+Once yotta is installed, you can use it to download the latest version of mbed TLS form the yotta registry with:
+    yotta install mbedtls
+
+and build it with:
+    yotta build
+
+If, on the other hand, you already have a copy of mbed TLS from a source other than the yotta registry, for example from cloning 
+our github repository, or from downloading a tarball of the standalone edition, then you'll need first need to generate the yotta module by running:
+    yotta/create-module.sh
+
+from the mbed TLS root directory. This will create the yotta module in the `yotta/module` directory. You can then change to that directory and build as usual:
+    cd yotta/module
+    yotta build
+
+The yotta edition of mbed TLS includes a few example programs, some of which demonstrate integration with mbed OS; for more details, 
+please consult the [Readme at the root of the yotta module](https://github.com/ARMmbed/mbedtls/blob/development/yotta/data/README.md).
+
+
+Windows platform
+environment 
+	`WINDOWS_BUILD=1`
+	`SHARED`
+	`DEBUG`
+ -DUSE_SHARED_MBEDTLS_LIBRARY=On .
+
+[the mbed TLS Knowledge Base](https://tls.mbed.org/kb)
+
+
+Tests
+-----
+mbed TLS includes an elaborate test suite in `tests/` that initially requires Perl to generate the tests files (e.g. `test\_suite\_mpi.c`). These files are 
+generated from a `function file` (e.g. `suites/test\_suite\_mpi.function`) and a `data file` (e.g. `suites/test\_suite\_mpi.data`). The `function file` 
+contains the test functions. The `data file` contains the test cases, specified as parameters that will be passed to the test function.
+
+
+For machines with a Unix shell and OpenSSL (and optionally GnuTLS) installed, additional test scripts are available:
+-   `tests/ssl-opt.sh` runs integration tests for various TLS options (renegotiation, resumption, etc.) and tests interoperability of these options with other implementations.
+-   `tests/compat.sh` tests interoperability of every ciphersuite with other implementations.
+-   `tests/scripts/test-ref-configs.pl` test builds in various reduced configurations.
+-   `tests/scripts/all.sh` runs a combination of the above tests, plus some more, with various build options (such as ASan, full `config.h`, etc).
+

@@ -1,0 +1,830 @@
+
+#include <libTest.h>
+
+
+#ifndef NO_DES3
+int des_test(void)
+{
+    const byte vector[] = { /* "now is the time for all " w/o trailing 0 */
+        0x6e,0x6f,0x77,0x20,0x69,0x73,0x20,0x74,
+        0x68,0x65,0x20,0x74,0x69,0x6d,0x65,0x20,
+        0x66,0x6f,0x72,0x20,0x61,0x6c,0x6c,0x20
+    };
+
+    byte plain[24];
+    byte cipher[24];
+
+    Des enc;
+    Des dec;
+
+    const byte key[] =
+    {
+        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef
+    };
+
+    const byte iv[] =
+    {
+        0x12,0x34,0x56,0x78,0x90,0xab,0xcd,0xef
+    };
+
+    const byte verify[] =
+    {
+        0x8b,0x7c,0x52,0xb0,0x01,0x2b,0x6c,0xb8,
+        0x4f,0x0f,0xeb,0xf3,0xfb,0x5f,0x86,0x73,
+        0x15,0x85,0xb3,0x22,0x4b,0x86,0x2b,0x4b
+    };
+
+    int ret;
+
+    ret = wc_Des_SetKey(&enc, key, iv, DES_ENCRYPTION);
+    if (ret != 0)
+        return -31;
+
+    wc_Des_CbcEncrypt(&enc, cipher, vector, sizeof(vector));
+    ret = wc_Des_SetKey(&dec, key, iv, DES_DECRYPTION);
+    if (ret != 0)
+        return -32;
+    wc_Des_CbcDecrypt(&dec, plain, cipher, sizeof(cipher));
+
+    if (memcmp(plain, vector, sizeof(plain)))
+        return -33;
+
+    if (memcmp(cipher, verify, sizeof(cipher)))
+        return -34;
+
+    return 0;
+}
+#endif /* NO_DES3 */
+
+
+#ifndef NO_DES3
+int des3_test(void)
+{
+    const byte vector[] = { /* "Now is the time for all " w/o trailing 0 */
+        0x4e,0x6f,0x77,0x20,0x69,0x73,0x20,0x74,
+        0x68,0x65,0x20,0x74,0x69,0x6d,0x65,0x20,
+        0x66,0x6f,0x72,0x20,0x61,0x6c,0x6c,0x20
+    };
+
+    byte plain[24];
+    byte cipher[24];
+
+    Des3 enc;
+    Des3 dec;
+
+    const byte key3[] =
+    {
+        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
+        0xfe,0xde,0xba,0x98,0x76,0x54,0x32,0x10,
+        0x89,0xab,0xcd,0xef,0x01,0x23,0x45,0x67
+    };
+    const byte iv3[] =
+    {
+        0x12,0x34,0x56,0x78,0x90,0xab,0xcd,0xef,
+        0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
+        0x11,0x21,0x31,0x41,0x51,0x61,0x71,0x81
+
+    };
+
+    const byte verify3[] =
+    {
+        0x43,0xa0,0x29,0x7e,0xd1,0x84,0xf8,0x0e,
+        0x89,0x64,0x84,0x32,0x12,0xd5,0x08,0x98,
+        0x18,0x94,0x15,0x74,0x87,0x12,0x7d,0xb0
+    };
+
+    int ret;
+
+
+#ifdef HAVE_CAVIUM
+    if (wc_Des3_InitCavium(&enc, CAVIUM_DEV_ID) != 0)
+        return -20005;
+    if (wc_Des3_InitCavium(&dec, CAVIUM_DEV_ID) != 0)
+        return -20006;
+#endif
+    ret = wc_Des3_SetKey(&enc, key3, iv3, DES_ENCRYPTION);
+    if (ret != 0)
+        return -31;
+    ret = wc_Des3_SetKey(&dec, key3, iv3, DES_DECRYPTION);
+    if (ret != 0)
+        return -32;
+    ret = wc_Des3_CbcEncrypt(&enc, cipher, vector, sizeof(vector));
+    if (ret != 0)
+        return -33;
+    ret = wc_Des3_CbcDecrypt(&dec, plain, cipher, sizeof(cipher));
+    if (ret != 0)
+        return -34;
+
+    if (memcmp(plain, vector, sizeof(plain)))
+        return -35;
+
+    if (memcmp(cipher, verify3, sizeof(cipher)))
+        return -36;
+
+#ifdef HAVE_CAVIUM
+    wc_Des3_FreeCavium(&enc);
+    wc_Des3_FreeCavium(&dec);
+#endif
+    return 0;
+}
+#endif /* NO_DES */
+
+#ifndef NO_AES
+int aes_test(void)
+{
+    Aes enc;
+    Aes dec;
+
+    const byte msg[] = { /* "Now is the time for all " w/o trailing 0 */
+        0x6e,0x6f,0x77,0x20,0x69,0x73,0x20,0x74,
+        0x68,0x65,0x20,0x74,0x69,0x6d,0x65,0x20,
+        0x66,0x6f,0x72,0x20,0x61,0x6c,0x6c,0x20
+    };
+
+    const byte verify[] =
+    {
+        0x95,0x94,0x92,0x57,0x5f,0x42,0x81,0x53,
+        0x2c,0xcc,0x9d,0x46,0x77,0xa2,0x33,0xcb
+    };
+
+    byte key[] = "0123456789abcdef   ";  /* align */
+    byte iv[]  = "1234567890abcdef   ";  /* align */
+
+    byte cipher[AES_BLOCK_SIZE * 4];
+    byte plain [AES_BLOCK_SIZE * 4];
+    int  ret;
+
+#ifdef HAVE_CAVIUM
+        if (wc_AesInitCavium(&enc, CAVIUM_DEV_ID) != 0)
+            return -20003;
+        if (wc_AesInitCavium(&dec, CAVIUM_DEV_ID) != 0)
+            return -20004;
+#endif
+    ret = wc_AesSetKey(&enc, key, AES_BLOCK_SIZE, iv, AES_ENCRYPTION);
+    if (ret != 0)
+        return -1001;
+    ret = wc_AesSetKey(&dec, key, AES_BLOCK_SIZE, iv, AES_DECRYPTION);
+    if (ret != 0)
+        return -1002;
+
+    ret = wc_AesCbcEncrypt(&enc, cipher, msg,   AES_BLOCK_SIZE);
+    if (ret != 0)
+        return -1005;
+    ret = wc_AesCbcDecrypt(&dec, plain, cipher, AES_BLOCK_SIZE);
+    if (ret != 0)
+        return -1006;
+
+    if (memcmp(plain, msg, AES_BLOCK_SIZE))
+        return -60;
+
+    if (memcmp(cipher, verify, AES_BLOCK_SIZE))
+        return -61;
+
+#ifdef HAVE_CAVIUM
+        wc_AesFreeCavium(&enc);
+        wc_AesFreeCavium(&dec);
+#endif
+#ifdef WOLFSSL_AES_COUNTER
+    {
+        const byte ctrKey[] =
+        {
+            0x2b,0x7e,0x15,0x16,0x28,0xae,0xd2,0xa6,
+            0xab,0xf7,0x15,0x88,0x09,0xcf,0x4f,0x3c
+        };
+
+        const byte ctrIv[] =
+        {
+            0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,
+            0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff
+        };
+
+
+        const byte ctrPlain[] =
+        {
+            0x6b,0xc1,0xbe,0xe2,0x2e,0x40,0x9f,0x96,
+            0xe9,0x3d,0x7e,0x11,0x73,0x93,0x17,0x2a,
+            0xae,0x2d,0x8a,0x57,0x1e,0x03,0xac,0x9c,
+            0x9e,0xb7,0x6f,0xac,0x45,0xaf,0x8e,0x51,
+            0x30,0xc8,0x1c,0x46,0xa3,0x5c,0xe4,0x11,
+            0xe5,0xfb,0xc1,0x19,0x1a,0x0a,0x52,0xef,
+            0xf6,0x9f,0x24,0x45,0xdf,0x4f,0x9b,0x17,
+            0xad,0x2b,0x41,0x7b,0xe6,0x6c,0x37,0x10
+        };
+
+        const byte ctrCipher[] =
+        {
+            0x87,0x4d,0x61,0x91,0xb6,0x20,0xe3,0x26,
+            0x1b,0xef,0x68,0x64,0x99,0x0d,0xb6,0xce,
+            0x98,0x06,0xf6,0x6b,0x79,0x70,0xfd,0xff,
+            0x86,0x17,0x18,0x7b,0xb9,0xff,0xfd,0xff,
+            0x5a,0xe4,0xdf,0x3e,0xdb,0xd5,0xd3,0x5e,
+            0x5b,0x4f,0x09,0x02,0x0d,0xb0,0x3e,0xab,
+            0x1e,0x03,0x1d,0xda,0x2f,0xbe,0x03,0xd1,
+            0x79,0x21,0x70,0xa0,0xf3,0x00,0x9c,0xee
+        };
+
+        const byte oddCipher[] =
+        {
+            0xb9,0xd7,0xcb,0x08,0xb0,0xe1,0x7b,0xa0,
+            0xc2
+        };
+
+        wc_AesSetKeyDirect(&enc, ctrKey, AES_BLOCK_SIZE, ctrIv, AES_ENCRYPTION);
+        /* Ctr only uses encrypt, even on key setup */
+        wc_AesSetKeyDirect(&dec, ctrKey, AES_BLOCK_SIZE, ctrIv, AES_ENCRYPTION);
+
+        wc_AesCtrEncrypt(&enc, cipher, ctrPlain, AES_BLOCK_SIZE*4);
+        wc_AesCtrEncrypt(&dec, plain, cipher, AES_BLOCK_SIZE*4);
+
+        if (memcmp(plain, ctrPlain, AES_BLOCK_SIZE*4))
+            return -66;
+
+        if (memcmp(cipher, ctrCipher, AES_BLOCK_SIZE*4))
+            return -67;
+
+        /* let's try with just 9 bytes, non block size test */
+        wc_AesSetKeyDirect(&enc, ctrKey, AES_BLOCK_SIZE, ctrIv, AES_ENCRYPTION);
+        /* Ctr only uses encrypt, even on key setup */
+        wc_AesSetKeyDirect(&dec, ctrKey, AES_BLOCK_SIZE, ctrIv, AES_ENCRYPTION);
+
+        wc_AesCtrEncrypt(&enc, cipher, ctrPlain, 9);
+        wc_AesCtrEncrypt(&dec, plain, cipher, 9);
+
+        if (memcmp(plain, ctrPlain, 9))
+            return -68;
+
+        if (memcmp(cipher, ctrCipher, 9))
+            return -69;
+
+        /* and an additional 9 bytes to reuse tmp left buffer */
+        wc_AesCtrEncrypt(&enc, cipher, ctrPlain, 9);
+        wc_AesCtrEncrypt(&dec, plain, cipher, 9);
+
+        if (memcmp(plain, ctrPlain, 9))
+            return -70;
+
+        if (memcmp(cipher, oddCipher, 9))
+            return -71;
+    }
+#endif /* WOLFSSL_AES_COUNTER */
+
+#if defined(WOLFSSL_AESNI) && defined(WOLFSSL_AES_DIRECT)
+    {
+        const byte niPlain[] =
+        {
+            0x6b,0xc1,0xbe,0xe2,0x2e,0x40,0x9f,0x96,
+            0xe9,0x3d,0x7e,0x11,0x73,0x93,0x17,0x2a
+        };
+
+        const byte niCipher[] =
+        {
+            0xf3,0xee,0xd1,0xbd,0xb5,0xd2,0xa0,0x3c,
+            0x06,0x4b,0x5a,0x7e,0x3d,0xb1,0x81,0xf8
+        };
+
+        const byte niKey[] =
+        {
+            0x60,0x3d,0xeb,0x10,0x15,0xca,0x71,0xbe,
+            0x2b,0x73,0xae,0xf0,0x85,0x7d,0x77,0x81,
+            0x1f,0x35,0x2c,0x07,0x3b,0x61,0x08,0xd7,
+            0x2d,0x98,0x10,0xa3,0x09,0x14,0xdf,0xf4
+        };
+
+        XMEMSET(cipher, 0, AES_BLOCK_SIZE);
+        ret = wc_AesSetKey(&enc, niKey, sizeof(niKey), cipher, AES_ENCRYPTION);
+        if (ret != 0)
+            return -1003;
+        wc_AesEncryptDirect(&enc, cipher, niPlain);
+        if (XMEMCMP(cipher, niCipher, AES_BLOCK_SIZE) != 0)
+            return -20006;
+
+        XMEMSET(plain, 0, AES_BLOCK_SIZE);
+        ret = wc_AesSetKey(&dec, niKey, sizeof(niKey), plain, AES_DECRYPTION);
+        if (ret != 0)
+            return -1004;
+        wc_AesDecryptDirect(&dec, plain, niCipher);
+        if (XMEMCMP(plain, niPlain, AES_BLOCK_SIZE) != 0)
+            return -20007;
+    }
+#endif /* WOLFSSL_AESNI && WOLFSSL_AES_DIRECT */
+
+    return 0;
+}
+
+#ifdef HAVE_AESGCM
+int aesgcm_test(void)
+{
+    Aes enc;
+
+    /*
+     * This is Test Case 16 from the document Galois/
+     * Counter Mode of Operation (GCM) by McGrew and
+     * Viega.
+     */
+    const byte k[] =
+    {
+        0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
+        0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08,
+        0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
+        0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08
+    };
+
+    const byte iv[] =
+    {
+        0xca, 0xfe, 0xba, 0xbe, 0xfa, 0xce, 0xdb, 0xad,
+        0xde, 0xca, 0xf8, 0x88
+    };
+
+    const byte p[] =
+    {
+        0xd9, 0x31, 0x32, 0x25, 0xf8, 0x84, 0x06, 0xe5,
+        0xa5, 0x59, 0x09, 0xc5, 0xaf, 0xf5, 0x26, 0x9a,
+        0x86, 0xa7, 0xa9, 0x53, 0x15, 0x34, 0xf7, 0xda,
+        0x2e, 0x4c, 0x30, 0x3d, 0x8a, 0x31, 0x8a, 0x72,
+        0x1c, 0x3c, 0x0c, 0x95, 0x95, 0x68, 0x09, 0x53,
+        0x2f, 0xcf, 0x0e, 0x24, 0x49, 0xa6, 0xb5, 0x25,
+        0xb1, 0x6a, 0xed, 0xf5, 0xaa, 0x0d, 0xe6, 0x57,
+        0xba, 0x63, 0x7b, 0x39
+    };
+
+    const byte a[] =
+    {
+        0xfe, 0xed, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+        0xfe, 0xed, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+        0xab, 0xad, 0xda, 0xd2
+    };
+
+    const byte c[] =
+    {
+        0x52, 0x2d, 0xc1, 0xf0, 0x99, 0x56, 0x7d, 0x07,
+        0xf4, 0x7f, 0x37, 0xa3, 0x2a, 0x84, 0x42, 0x7d,
+        0x64, 0x3a, 0x8c, 0xdc, 0xbf, 0xe5, 0xc0, 0xc9,
+        0x75, 0x98, 0xa2, 0xbd, 0x25, 0x55, 0xd1, 0xaa,
+        0x8c, 0xb0, 0x8e, 0x48, 0x59, 0x0d, 0xbb, 0x3d,
+        0xa7, 0xb0, 0x8b, 0x10, 0x56, 0x82, 0x88, 0x38,
+        0xc5, 0xf6, 0x1e, 0x63, 0x93, 0xba, 0x7a, 0x0a,
+        0xbc, 0xc9, 0xf6, 0x62
+    };
+
+    const byte t[] =
+    {
+        0x76, 0xfc, 0x6e, 0xce, 0x0f, 0x4e, 0x17, 0x68,
+        0xcd, 0xdf, 0x88, 0x53, 0xbb, 0x2d, 0x55, 0x1b
+    };
+
+    byte t2[sizeof(t)];
+    byte p2[sizeof(c)];
+    byte c2[sizeof(p)];
+
+    int result;
+
+    memset(t2, 0, sizeof(t2));
+    memset(c2, 0, sizeof(c2));
+    memset(p2, 0, sizeof(p2));
+
+    wc_AesGcmSetKey(&enc, k, sizeof(k));
+    /* AES-GCM encrypt and decrypt both use AES encrypt internally */
+    wc_AesGcmEncrypt(&enc, c2, p, sizeof(c2), iv, sizeof(iv),
+                                                 t2, sizeof(t2), a, sizeof(a));
+    if (memcmp(c, c2, sizeof(c2)))
+        return -68;
+    if (memcmp(t, t2, sizeof(t2)))
+        return -69;
+
+    result = wc_AesGcmDecrypt(&enc, p2, c2, sizeof(p2), iv, sizeof(iv),
+                                                 t2, sizeof(t2), a, sizeof(a));
+    if (result != 0)
+        return -70;
+    if (memcmp(p, p2, sizeof(p2)))
+        return -71;
+
+    return 0;
+}
+
+int gmac_test(void)
+{
+    Gmac gmac;
+
+    const byte k1[] =
+    {
+        0x89, 0xc9, 0x49, 0xe9, 0xc8, 0x04, 0xaf, 0x01,
+        0x4d, 0x56, 0x04, 0xb3, 0x94, 0x59, 0xf2, 0xc8
+    };
+    const byte iv1[] =
+    {
+        0xd1, 0xb1, 0x04, 0xc8, 0x15, 0xbf, 0x1e, 0x94,
+        0xe2, 0x8c, 0x8f, 0x16
+    };
+    const byte a1[] =
+    {
+       0x82, 0xad, 0xcd, 0x63, 0x8d, 0x3f, 0xa9, 0xd9,
+       0xf3, 0xe8, 0x41, 0x00, 0xd6, 0x1e, 0x07, 0x77
+    };
+    const byte t1[] =
+    {
+        0x88, 0xdb, 0x9d, 0x62, 0x17, 0x2e, 0xd0, 0x43,
+        0xaa, 0x10, 0xf1, 0x6d, 0x22, 0x7d, 0xc4, 0x1b
+    };
+
+    const byte k2[] =
+    {
+        0x40, 0xf7, 0xec, 0xb2, 0x52, 0x6d, 0xaa, 0xd4,
+        0x74, 0x25, 0x1d, 0xf4, 0x88, 0x9e, 0xf6, 0x5b
+    };
+    const byte iv2[] =
+    {
+        0xee, 0x9c, 0x6e, 0x06, 0x15, 0x45, 0x45, 0x03,
+        0x1a, 0x60, 0x24, 0xa7
+    };
+    const byte a2[] =
+    {
+        0x94, 0x81, 0x2c, 0x87, 0x07, 0x4e, 0x15, 0x18,
+        0x34, 0xb8, 0x35, 0xaf, 0x1c, 0xa5, 0x7e, 0x56
+    };
+    const byte t2[] =
+    {
+        0xc6, 0x81, 0x79, 0x8e, 0x3d, 0xda, 0xb0, 0x9f,
+        0x8d, 0x83, 0xb0, 0xbb, 0x14, 0xb6, 0x91
+    };
+
+    const byte k3[] =
+    {
+        0xb8, 0xe4, 0x9a, 0x5e, 0x37, 0xf9, 0x98, 0x2b,
+        0xb9, 0x6d, 0xd0, 0xc9, 0xb6, 0xab, 0x26, 0xac
+    };
+    const byte iv3[] =
+    {
+        0xe4, 0x4a, 0x42, 0x18, 0x8c, 0xae, 0x94, 0x92,
+        0x6a, 0x9c, 0x26, 0xb0
+    };
+    const byte a3[] =
+    {
+        0x9d, 0xb9, 0x61, 0x68, 0xa6, 0x76, 0x7a, 0x31,
+        0xf8, 0x29, 0xe4, 0x72, 0x61, 0x68, 0x3f, 0x8a
+    };
+    const byte t3[] =
+    {
+        0x23, 0xe2, 0x9f, 0x66, 0xe4, 0xc6, 0x52, 0x48
+    };
+
+    byte tag[16];
+
+    memset(tag, 0, sizeof(tag));
+    wc_GmacSetKey(&gmac, k1, sizeof(k1));
+    wc_GmacUpdate(&gmac, iv1, sizeof(iv1), a1, sizeof(a1), tag, sizeof(t1));
+    if (memcmp(t1, tag, sizeof(t1)) != 0)
+        return -126;
+
+    memset(tag, 0, sizeof(tag));
+    wc_GmacSetKey(&gmac, k2, sizeof(k2));
+    wc_GmacUpdate(&gmac, iv2, sizeof(iv2), a2, sizeof(a2), tag, sizeof(t2));
+    if (memcmp(t2, tag, sizeof(t2)) != 0)
+        return -127;
+
+    memset(tag, 0, sizeof(tag));
+    wc_GmacSetKey(&gmac, k3, sizeof(k3));
+    wc_GmacUpdate(&gmac, iv3, sizeof(iv3), a3, sizeof(a3), tag, sizeof(t3));
+    if (memcmp(t3, tag, sizeof(t3)) != 0)
+        return -128;
+
+    return 0;
+}
+#endif /* HAVE_AESGCM */
+
+#ifdef HAVE_AESCCM
+int aesccm_test(void)
+{
+    Aes enc;
+
+    /* key */
+    const byte k[] =
+    {
+        0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
+        0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf
+    };
+
+    /* nonce */
+    const byte iv[] =
+    {
+        0x00, 0x00, 0x00, 0x03, 0x02, 0x01, 0x00, 0xa0,
+        0xa1, 0xa2, 0xa3, 0xa4, 0xa5
+    };
+
+    /* plaintext */
+    const byte p[] =
+    {
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e
+    };
+
+    const byte a[] =
+    {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+    };
+
+    const byte c[] =
+    {
+        0x58, 0x8c, 0x97, 0x9a, 0x61, 0xc6, 0x63, 0xd2,
+        0xf0, 0x66, 0xd0, 0xc2, 0xc0, 0xf9, 0x89, 0x80,
+        0x6d, 0x5f, 0x6b, 0x61, 0xda, 0xc3, 0x84
+    };
+
+    const byte t[] =
+    {
+        0x17, 0xe8, 0xd1, 0x2c, 0xfd, 0xf9, 0x26, 0xe0
+    };
+
+    byte t2[sizeof(t)];
+    byte p2[sizeof(p)];
+    byte c2[sizeof(c)];
+
+    int result;
+
+    memset(t2, 0, sizeof(t2));
+    memset(c2, 0, sizeof(c2));
+    memset(p2, 0, sizeof(p2));
+
+    wc_AesCcmSetKey(&enc, k, sizeof(k));
+    /* AES-CCM encrypt and decrypt both use AES encrypt internally */
+    wc_AesCcmEncrypt(&enc, c2, p, sizeof(c2), iv, sizeof(iv),
+                                                 t2, sizeof(t2), a, sizeof(a));
+    if (memcmp(c, c2, sizeof(c2)))
+        return -107;
+    if (memcmp(t, t2, sizeof(t2)))
+        return -108;
+
+    result = wc_AesCcmDecrypt(&enc, p2, c2, sizeof(p2), iv, sizeof(iv),
+                                                 t2, sizeof(t2), a, sizeof(a));
+    if (result != 0)
+        return -109;
+    if (memcmp(p, p2, sizeof(p2)))
+        return -110;
+
+    /* Test the authentication failure */
+    t2[0]++; /* Corrupt the authentication tag. */
+    result = wc_AesCcmDecrypt(&enc, p2, c, sizeof(p2), iv, sizeof(iv),
+                                                 t2, sizeof(t2), a, sizeof(a));
+    if (result == 0)
+        return -111;
+
+    /* Clear c2 to compare against p2. p2 should be set to zero in case of
+     * authentication fail. */
+    memset(c2, 0, sizeof(c2));
+    if (memcmp(p2, c2, sizeof(p2)))
+        return -112;
+
+    return 0;
+}
+#endif /* HAVE_AESCCM */
+
+#endif /* NO_AES */
+
+#ifdef HAVE_CAMELLIA
+
+enum {
+    CAM_ECB_ENC, CAM_ECB_DEC, CAM_CBC_ENC, CAM_CBC_DEC
+};
+
+typedef struct {
+    int type;
+    const byte* plaintext;
+    const byte* iv;
+    const byte* ciphertext;
+    const byte* key;
+    word32 keySz;
+    int errorCode;
+} test_vector_t;
+
+int camellia_test(void)
+{
+    /* Camellia ECB Test Plaintext */
+    static const byte pte[] =
+    {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    /* Camellia ECB Test Initialization Vector */
+    static const byte ive[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+    /* Test 1: Camellia ECB 128-bit key */
+    static const byte k1[] =
+    {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    static const byte c1[] =
+    {
+        0x67, 0x67, 0x31, 0x38, 0x54, 0x96, 0x69, 0x73,
+        0x08, 0x57, 0x06, 0x56, 0x48, 0xea, 0xbe, 0x43
+    };
+
+    /* Test 2: Camellia ECB 192-bit key */
+    static const byte k2[] =
+    {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
+    };
+    static const byte c2[] =
+    {
+        0xb4, 0x99, 0x34, 0x01, 0xb3, 0xe9, 0x96, 0xf8,
+        0x4e, 0xe5, 0xce, 0xe7, 0xd7, 0x9b, 0x09, 0xb9
+    };
+
+    /* Test 3: Camellia ECB 256-bit key */
+    static const byte k3[] =
+    {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
+    };
+    static const byte c3[] =
+    {
+        0x9a, 0xcc, 0x23, 0x7d, 0xff, 0x16, 0xd7, 0x6c,
+        0x20, 0xef, 0x7c, 0x91, 0x9e, 0x3a, 0x75, 0x09
+    };
+
+    /* Camellia CBC Test Plaintext */
+    static const byte ptc[] =
+    {
+        0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96,
+        0xE9, 0x3D, 0x7E, 0x11, 0x73, 0x93, 0x17, 0x2A
+    };
+
+    /* Camellia CBC Test Initialization Vector */
+    static const byte ivc[] =
+    {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    };
+
+    /* Test 4: Camellia-CBC 128-bit key */
+    static const byte k4[] =
+    {
+        0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6,
+        0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C
+    };
+    static const byte c4[] =
+    {
+        0x16, 0x07, 0xCF, 0x49, 0x4B, 0x36, 0xBB, 0xF0,
+        0x0D, 0xAE, 0xB0, 0xB5, 0x03, 0xC8, 0x31, 0xAB
+    };
+
+    /* Test 5: Camellia-CBC 192-bit key */
+    static const byte k5[] =
+    {
+        0x8E, 0x73, 0xB0, 0xF7, 0xDA, 0x0E, 0x64, 0x52,
+        0xC8, 0x10, 0xF3, 0x2B, 0x80, 0x90, 0x79, 0xE5,
+        0x62, 0xF8, 0xEA, 0xD2, 0x52, 0x2C, 0x6B, 0x7B
+    };
+    static const byte c5[] =
+    {
+        0x2A, 0x48, 0x30, 0xAB, 0x5A, 0xC4, 0xA1, 0xA2,
+        0x40, 0x59, 0x55, 0xFD, 0x21, 0x95, 0xCF, 0x93
+    };
+
+    /* Test 6: CBC 256-bit key */
+    static const byte k6[] =
+    {
+        0x60, 0x3D, 0xEB, 0x10, 0x15, 0xCA, 0x71, 0xBE,
+        0x2B, 0x73, 0xAE, 0xF0, 0x85, 0x7D, 0x77, 0x81,
+        0x1F, 0x35, 0x2C, 0x07, 0x3B, 0x61, 0x08, 0xD7,
+        0x2D, 0x98, 0x10, 0xA3, 0x09, 0x14, 0xDF, 0xF4
+    };
+    static const byte c6[] =
+    {
+        0xE6, 0xCF, 0xA3, 0x5F, 0xC0, 0x2B, 0x13, 0x4A,
+        0x4D, 0x2C, 0x0B, 0x67, 0x37, 0xAC, 0x3E, 0xDA
+    };
+
+    byte out[CAMELLIA_BLOCK_SIZE];
+    Camellia cam;
+    int i, testsSz;
+    const test_vector_t testVectors[] =
+    {
+        {CAM_ECB_ENC, pte, ive, c1, k1, sizeof(k1), -114},
+        {CAM_ECB_ENC, pte, ive, c2, k2, sizeof(k2), -115},
+        {CAM_ECB_ENC, pte, ive, c3, k3, sizeof(k3), -116},
+        {CAM_ECB_DEC, pte, ive, c1, k1, sizeof(k1), -117},
+        {CAM_ECB_DEC, pte, ive, c2, k2, sizeof(k2), -118},
+        {CAM_ECB_DEC, pte, ive, c3, k3, sizeof(k3), -119},
+        {CAM_CBC_ENC, ptc, ivc, c4, k4, sizeof(k4), -120},
+        {CAM_CBC_ENC, ptc, ivc, c5, k5, sizeof(k5), -121},
+        {CAM_CBC_ENC, ptc, ivc, c6, k6, sizeof(k6), -122},
+        {CAM_CBC_DEC, ptc, ivc, c4, k4, sizeof(k4), -123},
+        {CAM_CBC_DEC, ptc, ivc, c5, k5, sizeof(k5), -124},
+        {CAM_CBC_DEC, ptc, ivc, c6, k6, sizeof(k6), -125}
+    };
+
+    testsSz = sizeof(testVectors)/sizeof(test_vector_t);
+    for (i = 0; i < testsSz; i++) {
+        if (wc_CamelliaSetKey(&cam, testVectors[i].key, testVectors[i].keySz,
+                                                        testVectors[i].iv) != 0)
+            return testVectors[i].errorCode;
+
+        switch (testVectors[i].type) {
+            case CAM_ECB_ENC:
+                wc_CamelliaEncryptDirect(&cam, out, testVectors[i].plaintext);
+                if (memcmp(out, testVectors[i].ciphertext, CAMELLIA_BLOCK_SIZE))
+                    return testVectors[i].errorCode;
+                break;
+            case CAM_ECB_DEC:
+                wc_CamelliaDecryptDirect(&cam, out, testVectors[i].ciphertext);
+                if (memcmp(out, testVectors[i].plaintext, CAMELLIA_BLOCK_SIZE))
+                    return testVectors[i].errorCode;
+                break;
+            case CAM_CBC_ENC:
+                wc_CamelliaCbcEncrypt(&cam, out, testVectors[i].plaintext,
+                                                           CAMELLIA_BLOCK_SIZE);
+                if (memcmp(out, testVectors[i].ciphertext, CAMELLIA_BLOCK_SIZE))
+                    return testVectors[i].errorCode;
+                break;
+            case CAM_CBC_DEC:
+                wc_CamelliaCbcDecrypt(&cam, out, testVectors[i].ciphertext,
+                                                           CAMELLIA_BLOCK_SIZE);
+                if (memcmp(out, testVectors[i].plaintext, CAMELLIA_BLOCK_SIZE))
+                    return testVectors[i].errorCode;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /* Setting the IV and checking it was actually set. */
+    wc_CamelliaSetIV(&cam, ivc);
+    if (XMEMCMP(cam.reg, ivc, CAMELLIA_BLOCK_SIZE))
+        return -1;
+
+    /* Setting the IV to NULL should be same as all zeros IV */
+    if (wc_CamelliaSetIV(&cam, NULL) != 0 ||
+                                    XMEMCMP(cam.reg, ive, CAMELLIA_BLOCK_SIZE))
+        return -1;
+
+    /* First parameter should never be null */
+    if (wc_CamelliaSetIV(NULL, NULL) == 0)
+        return -1;
+
+    /* First parameter should never be null, check it fails */
+    if (wc_CamelliaSetKey(NULL, k1, sizeof(k1), NULL) == 0)
+        return -1;
+
+    /* Key should have a size of 16, 24, or 32 */
+    if (wc_CamelliaSetKey(&cam, k1, 0, NULL) == 0)
+        return -1;
+
+    return 0;
+}
+#endif /* HAVE_CAMELLIA */
+
+
+
+
+int main(int argc, char** argv)
+{
+	int ret;
+
+	func_args args;
+
+	args.argc = argc;
+	args.argv = argv;
+	
+	wolfSSL_Debugging_ON();
+	
+#ifndef NO_DES3
+ 	TEST_FUNCTION(des_test, DES, ret);
+#endif
+
+#ifndef NO_DES3
+ 	TEST_FUNCTION(des3_test, DES3, ret);
+#endif
+
+#ifndef NO_AES
+ 	TEST_FUNCTION(aes_test, AES, ret);
+
+#ifdef HAVE_AESGCM
+ 	TEST_FUNCTION(aesgcm_test, AES-GCM, ret);
+#endif
+
+#ifdef HAVE_AESCCM
+ 	TEST_FUNCTION(aesccm_test, AES-CCM, ret);
+#endif
+
+
+#ifdef HAVE_AESGCM
+   	TEST_FUNCTION(gmac_test, GMAC, ret);
+#endif
+
+
+#ifdef HAVE_CAMELLIA
+   	TEST_FUNCTION(camellia_test, CAMELLIA, ret);
+#endif
+
+#endif
+
+	args.return_code = ret;
+	return args.return_code;
+}
+
