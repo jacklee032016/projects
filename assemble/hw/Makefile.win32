@@ -1,0 +1,81 @@
+# 
+
+
+TARGET_TYPE=CUI
+
+
+EXE_NAME=ecpws
+
+
+ODD = \
+    $(OBJDIR)\helloMsgBox.obj    \
+    $(OBJDIR)\hardwareNasm.obj    \
+    $(OBJDIR)\ProcessorBrandGas.obj    \
+    $(OBJDIR)\extL2CacheGas.obj    \
+
+
+!include MakePre.mak
+
+  
+OBJS = \
+    $(OBJDIR)\hardwareGas.o    \
+		
+
+!if "$(TARGET_TYPE)" == "GUI"
+RESES= \
+    $(OBJDIR)\$(EXE_NAME).res    
+!else
+RESES= 
+!endif
+
+
+DEST= $(OUTDIR)\hardwareGas.exe $(OUTDIR)\hardwareNasm.exe $(OUTDIR)\ProcessorBrandGas.exe \
+ 				$(OUTDIR)\extL2CacheGas.exe
+#
+#	 
+# 
+
+
+
+# Third, the target dependences
+all:$(OBJDIR) $(OBJS) $(DEST) 
+
+
+$(OBJDIR) :
+    if not exist "$(OBJDIR)/$(NULL)" mkdir $(OBJDIR)
+
+
+LIBS =
+#$(LIB_CRYPTO).lib $(LIB_TLS).lib wsock32.lib  advapi32.lib 
+#user32.lib  $(linkdebug) -subsystem:console $(LINK_FLAGS)
+
+ODD_LIB = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib \
+		ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib 
+
+
+$(OUTDIR)\extL2CacheGas.exe: $(OBJDIR)\extL2CacheGas.o
+	$(link) /subsystem:console /defaultlib:libcmt.lib  /entry:main -out:$@ $** 
+
+$(OUTDIR)\ProcessorBrandGas.exe: $(OBJDIR)\ProcessorBrandGas.o
+	$(link) $(LINK_FLAGS) -out:$@ $** libcmt.lib 
+
+
+$(OUTDIR)\hardwareGas.exe: $(OBJDIR)\hardwareGas.o
+	$(link) /subsystem:console -out:$@ $** libcmt.lib 
+
+$(OUTDIR)\hardwareNasm.exe: $(OBJDIR)\hardwareNasm.obj
+	$(link) $(LINK_FLAGS) -out:$@ $** libcmt.lib 
+
+
+	
+!if "$(QUIET)"=="N"
+    dumpbin /imports $@
+!endif    
+
+
+#	gdi32.lib 
+
+
+clean:
+        $(CLEANUP)
+

@@ -1,0 +1,18 @@
+LIBRARY   libHwUtils
+
+EXPORTS
+		CalculateCPUSpeed
+		ProcSpeedCalc
+		
+		cpuString
+		cpuBrand
+
+		getInt
+		getString
+		
+		getStackString
+
+		setParamsValues
+		
+		setParamsPointers
+		

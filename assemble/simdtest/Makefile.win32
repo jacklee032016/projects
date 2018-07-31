@@ -1,0 +1,68 @@
+# 
+
+
+TARGET_TYPE=CUI
+
+
+EXE_NAME=simdtest
+
+
+ODD = \
+    $(OBJDIR)\helloMsgBox.obj    \
+
+
+!include MakePre.mak
+
+
+cflags=$(cflags) /EHsc
+  
+OBJS = \
+    $(OBJDIR)\simdtest.obj    \
+    $(OBJDIR)\HugiCode.obj    \
+    $(OBJDIR)\Vector4f.obj    \
+    $(OBJDIR)\Matrix4f.obj    \
+		
+
+!if "$(TARGET_TYPE)" == "GUI"
+RESES= \
+    $(OBJDIR)\$(EXE_NAME).res    
+!else
+RESES= 
+!endif
+
+
+DEST= $(OUTDIR)\simdtest.exe 
+# 
+
+
+
+# Third, the target dependences
+all:$(OBJDIR) $(OBJS) $(DEST) 
+
+
+$(OBJDIR) :
+    if not exist "$(OBJDIR)/$(NULL)" mkdir $(OBJDIR)
+
+
+LIBS =
+#$(LIB_CRYPTO).lib $(LIB_TLS).lib wsock32.lib  advapi32.lib 
+#user32.lib  $(linkdebug) -subsystem:console 
+
+ODD_LIB = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib \
+		ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib 
+
+$(OUTDIR)\simdtest.exe: $(OBJS)
+	$(link) $(LINK_FLAGS) -out:$@ $** 
+
+	
+!if "$(QUIET)"=="N"
+    dumpbin /imports $@
+!endif    
+
+
+#	gdi32.lib 
+
+
+clean:
+        $(CLEANUP)
+

@@ -1,0 +1,94 @@
+# Makefile 
+# $Id$
+
+# global option 
+
+
+ARCH=
+ASSIST_SHARED=true
+RELEASES_DIR=$(TOP_DIR)/releases
+TYPE=
+
+GRUEL_HOME=$(TOP_DIR)/gruel
+PYTHON_HOME=/d/python26
+
+ifeq ($(ARCH),arm)
+	CFLAGS += -mbig-endian -D__ARM_IXP__=1 
+	CROSS_COMPILER=arm-linux-
+  	LDFLAGS+= -mbig-endian 
+ 	K_CFLAGS+= -mbig-endian   
+	KINCLUDES=/works/tmp/linux-2.4.x/include
+	K_LDFLAGS+= -EB 
+  	
+ifneq ("","$(ASSIST_SHARED)")
+	LDFLAGS+=  #-Wl,-shared -Wl,-static 
+else
+	LDFLAGS+=  -Wl,-static
+endif
+
+else
+	KINCLUDES=/usr/src/linux-2.4/include
+	ARCH=i686
+endif
+
+PATHS='-DINSTALL_DATA_DIR="$(INSTALL_DATA_DIR)"' '-DINSTALL_NBIS_DIR="$(INSTALL_NBIS_DIR)"' 
+
+TEST_CFLAGS= -I$(CPPUNIT_INC_HOME)
+# Common flags for every module--1
+# Common flags for every module--1  -mthreads 
+ifeq ($(ARCH),arm)
+	C_CFLAGS_1 += $(PATHS)
+else
+	C_CFLAGS_1 += -DWIN32 -D__MSYS__ -D__MINGW32__ 
+endif
+C_CFLAGS_1 += -I$(TOP_DIR) -I$(TOP_DIR)/include 
+C_CFLAGS_1 += -D_WIN32_WINNT=0x0501 
+C_CFLAGS_1 += -g -O2 -MD -MP -DDLL_EXPORT -DPIC -DCOMPILED_WITH_GCC
+
+C_FLAGS += $(C_CFLAGS_1)
+
+C_FLAGS += $(TEST_CFLAGS) $(CORE_CFLAGS)
+# Common flags for every module--2   -DPIC 
+C_CFLAGS_2 += -DWINVER=0x0501 -O2 -Wall -I. 
+ifeq ($(IS_STATIC),yes)
+else
+	C_CFLAGS_2 += -DDLL_EXPORT -DSHARED_BUILD
+endif
+
+
+#BIN_DIR:=$(TOP_DIR)/bin.$(ARCH)
+BIN_DIR:=$(TOP_DIR)/bin
+LIB_DIR:=$(TOP_DIR)/lib
+
+OBJ_DIR:=obj.$(ARCH)
+ASM_OBJ_DIR:=obj.$(ARCH)
+TEST_OBJ_DIR:=obj.$(ARCH)/test
+
+CC	= $(CROSS_COMPILER)gcc
+GAS	= $(CROSS_COMPILER)as
+CXX 	= $(CROSS_COMPILER)g++ 
+STRIP	= $(CROSS_COMPILER)strip
+LD	= $(CROSS_COMPILER)ld
+RANLIB 	= $(CROSS_COMPILER)ranlib
+STRIP 	= $(CROSS_COMPILER)strip
+AR 	= $(CROSS_COMPILER)ar
+
+SWIG=swig
+
+HOSTCC	= gcc
+
+RM	= rm -r -f
+MKDIR	= mkdir -p
+MODE	= 700
+OWNER	= root
+CHOWN	= chown
+CHMOD	= chmod
+COPY	= cp -r -f -v
+MOVE	= mv
+
+ARFLAGS	= crv
+
+
+# CFLAGS+=$(C_CFLAGS)	$(MACRO_CFLAGS)
+
+#-lfprint -lglib-2.0 -lusb-1.0 -lm  -lkernel32  -luser32 -lwsock32

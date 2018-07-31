@@ -1,0 +1,21 @@
+# Example shell script to build and test code on Linux
+# Build both intrinsic and assembly forms of code (uses icc and yasm)
+# Test using the Intel Software Development Emulator
+icc intel_sha_extensions_sha*_intrinsic.c main.c -o intrinsics
+sde -glm -- ./intrinsics
+
+yasm -f elf64 -X gnu -g dwarf2 -o intel_sha_extensions_sha1_assembly.o intel_sha_extensions_sha1_assembly.asm
+yasm -f elf64 -X gnu -g dwarf2 -o intel_sha_extensions_sha256_assembly.o intel_sha_extensions_sha256_assembly.asm
+icc intel_sha_extensions_sha*_assembly.o main.c -o assembly
+sde -glm -- ./assembly
+
+gcc -msha -msse4 intel_sha_extensions_sha*_intrinsic.c main.c -o intrinsicsGcc
+sde -glm -- ./intrinsicsGcc
+
+yasm -f win64  -o intel_sha_extensions_sha1_assembly.o intel_sha_extensions_sha1_assembly.asm
+yasm -f win64  -o intel_sha_extensions_sha256_assembly.o intel_sha_extensions_sha256_assembly.asm
+
+Li Zhijie, 12.09.2015
+	Only check the platform, not all functions of SHA-extension.
+	Modify the main.c to support windows.
+

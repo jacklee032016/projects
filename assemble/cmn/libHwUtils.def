@@ -1,0 +1,13 @@
+EXPORTS
+    ProcSpeedCalc @1
+    calculateCPUSpeed @2
+    check_for_intel_sha_extensions @3
+    cpuBrand @4 DATA
+    cpuId @5
+    cpuInfoRdtsc @6
+    cpuString @7 DATA
+    getInt @8 DATA
+    getStackString @9 DATA
+    getString @10 DATA
+    setParamsPointers @11 DATA
+    setParamsValues @12 DATA

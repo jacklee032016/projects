@@ -1,0 +1,107 @@
+#
+# $Author$
+# $Log$
+#
+# $Revision$
+# $Id$
+#
+
+OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRC))) $(EXTRA_OBJS)
+ASM_OBJS := $(patsubst %.S,$(ASM_OBJ_DIR)/%.o,$(patsubst %.s,$(ASM_OBJ_DIR)/%.o,$(ASM_SRC))) $(EXTRA_OBJS)
+TEST_OBJS := $(patsubst %.c,$(TEST_OBJ_DIR)/%.o,$(patsubst %.cc,$(TEST_OBJ_DIR)/%.o,$(TEST_SRC))) $(EXTRA_OBJS)
+
+
+all:$(BIN_DIR) $(LIB_DIR) $(OBJ_DIR) $(LOCAL_ALL) $(TARGET_LIB) $(LOCAL_LAST) $(LOCAL_TEST)
+# $(TEST_BIN_DIR) $(TEST_OBJ_DIR) 
+
+$(OBJ_DIR):
+	-if [ -d $(OBJ_DIR) ] ; then : ; else $(MKDIR) $(OBJ_DIR); fi	
+ifdef CODE_SUBDIRS
+	-@ for subdir in $(CODE_SUBDIRS) ; do ( mkdir -p $(OBJ_DIR)/$$subdir ) ; done
+endif
+
+#ifdef TEST_CODE_SUBDIRS
+#	-@ for subdir in $(TEST_CODE_SUBDIRS) ; do ( mkdir -p $(TEST_OBJ_DIR)/$$subdir ) ; done
+#endif
+
+$(BIN_DIR):
+	-if [ -d $(BIN_DIR) ] ; then : ; else $(MKDIR) $(BIN_DIR); fi
+	
+
+$(LIB_DIR):
+	-if [ -d $(LIB_DIR) ] ; then : ; else $(MKDIR) $(LIB_DIR); fi
+	
+$(TEST_BIN_DIR):
+	-if [ -d $(TEST_BIN_DIR) ] ; then : ; else $(MKDIR) $(TEST_BIN_DIR); fi
+	
+$(TEST_OBJ_DIR):
+	-if [ -d $(TEST_OBJ_DIR) ] ; then : ; else $(MKDIR) $(TEST_OBJ_DIR); fi
+ifdef CODE_SUBDIRS
+	-@ for subdir in $(CODE_SUBDIRS) ; do ( mkdir -p $(TEST_OBJ_DIR)/$$subdir ) ; done
+endif
+	
+TARGET_LIB_SHARED:=$(TARGET_LIB).dll
+TARGET_LIB_STATIC:=$(TARGET_LIB).a
+	
+ifeq ($(IS_STATIC),yes)
+$(TARGET_LIB):$(TARGET_LIB_STATIC)		
+else
+	# TARGET_LIB_SHARED:=$(TARGET_LIB).so
+	# TARGET_LIB_SHARED:=$(TARGET_LIB).dylib
+	TARGET_LIB_INTERFACE:=$(TARGET_LIB).a
+	TARGET_LIB_DEF:=$(TARGET_LIB).def
+	
+$(TARGET_LIB):$(TARGET_LIB_SHARED)		
+endif
+
+
+
+
+#LDFLAGS := -lpthread -lm #-Wl,-soname -mthreads 
+
+$LDFLAGS := -Wall -Woverloaded-virtual -L/usr/local/lib
+# LDFLAGS += -version-info 0:0:0 -release 3.3.0  -no-undefined -rpath /usr/local/lib 
+# LDFLAGS += -lws2_32 -lboost_thread-mgw34-mt-d-1_43 -lstdc++ 
+$(TARGET_LIB_SHARED):$(OBJS) $(ASM_OBJS) 
+	$(CXX) -shared $(SHARED_LD_FLAGS) $^ -o $@ $(LDFLAGS) -Wl,--output-def,$(TARGET_LIB_DEF),--out-implib,$(TARGET_LIB_INTERFACE) 
+	$(MOVE) $(TARGET_LIB_SHARED) $(BIN_DIR)/
+	$(MOVE) $(TARGET_LIB_INTERFACE) $(LIB_DIR)/
+
+
+$(TARGET_LIB_STATIC):$(OBJS) $(ASM_OBJS)
+	$(AR) $(ARFLAGS) $@ $^ 
+	$(RANLIB) $@
+	$(MOVE) $(TARGET_LIB_STATIC) $(LIB_DIR)/
+
+
+$(KERNEL_LIB): $(KOBJS) 
+	$(LD) $(K_LDFLAGS) $^ -o $@
+	$(MOVE) $(KERNEL_LIB) $(BIN_DIR)/
+
+
+clean:$(LOCAL_CLEAN)
+	-if [ -d $(BIN_DIR) ] ; then $(RM) $(BIN_DIR) ; fi
+	-if [ -d $(OBJ_DIR) ] ; then $(RM) $(OBJ_DIR) ; fi
+	-if [ -d $(TEST_BIN_DIR) ] ; then $(RM) $(TEST_BIN_DIR) ; fi
+	-if [ -d $(TEST_OBJ_DIR) ] ; then $(RM) $(TEST_OBJ_DIR) ; fi
+	-if [ -d $(RELEASES_DIR) ] ; then $(RM) $(RELEASES_DIR) ; fi
+	
+
+ifeq ($(KERNEL),yes)
+$(OBJ_DIR)/%.o: %.c
+	$(CC) $(K_CFLAGS) -c $< -o $(OUTPUT_FLAG)$@ 
+else
+$(OBJ_DIR)/%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $(OUTPUT_FLAG)$@  
+$(OBJ_DIR)/%.o: %.cpp
+	$(CXX) $(CFLAGS) -Woverloaded-virtual -c $< -o $(OUTPUT_FLAG)$@  
+endif
+
+$(ASM_OBJ_DIR)/%.o: %.s
+	$(GAS) $(ASFLAGS) -a=$(ASM_OBJ_DIR)/$(OUTPUT_FLAG)$^.list $< -o $(OUTPUT_FLAG)$@  
+
+
+$(TEST_OBJ_DIR)/%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $(OUTPUT_FLAG)$@  
+$(TEST_OBJ_DIR)/%.o: %.cpp
+	$(CXX) $(CFLAGS) -Woverloaded-virtual -c $< -o $(OUTPUT_FLAG)$@  

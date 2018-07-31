@@ -1,0 +1,24 @@
+				README for Windows Web Server
+										Zhijie Li 2015.09.27
+
+Configuration in Registry
+	SOFTWARE\\DAEMONS\\Savant\\Directory Mappings
+		Number of Directories
+			For every DIR
+				Dir : used in URI, and mapped into local directory
+				Access	
+				Local Directory : name
+				Scripting : 	SCRIPTING_NONE| SCRIPTING_CGI| SCRIPTING_WINCGI| SCRIPTING_ISAPI
+				Authorized User : User name
+				Authorized Location : AUTH_LOC_ANYWHERE| A | B | C | D
+				
+
+	SOFTWARE\\DAEMONS\\Savant\\MIME
+		MIME Types
+			For every MIME
+				EXT : extension name of file
+				MIME Description: send to client after 'Content-Type:' field
+				
+			
+												
+				
